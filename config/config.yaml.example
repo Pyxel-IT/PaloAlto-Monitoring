@@ -1,0 +1,41 @@
+# Configuration exemple pour le monitoring Palo Alto
+# Copier ce fichier vers config.yaml et ajuster les valeurs
+
+paloalto:
+  # Liste des équipements à monitorer
+  devices:
+    - name: "fw-paris-01"
+      host: "10.0.1.10"
+      port: 443
+      api_key: "YOUR_API_KEY_HERE"
+      verify_ssl: false
+
+    - name: "fw-paris-02"
+      host: "10.0.1.11"
+      port: 443
+      api_key: "YOUR_API_KEY_HERE"
+      verify_ssl: false
+
+# Configuration InfluxDB
+influxdb:
+  host: "influxdb"
+  port: 8086
+  database: "paloalto_monitoring"
+  username: "admin"
+  password: "YOUR_PASSWORD_HERE"
+  retention_policy: "30d"
+
+# Configuration de la collecte
+collector:
+  interval_seconds: 60
+  timeout_seconds: 30
+  retry_count: 3
+  retry_delay_seconds: 5
+
+# Configuration des logs
+logging:
+  level: "INFO"
+  file: "logs/collector.log"
+  max_size_mb: 100
+  backup_count: 10
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

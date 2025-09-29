@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  influxdb:
+    image: influxdb:1.8
+    container_name: paloalto-influxdb
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb-data:/var/lib/influxdb
+    environment:
+      - INFLUXDB_DB=paloalto_monitoring
+      - INFLUXDB_ADMIN_USER=admin
+      - INFLUXDB_ADMIN_PASSWORD=changeme
+      - INFLUXDB_USER=collector
+      - INFLUXDB_USER_PASSWORD=changeme
+      - INFLUXDB_HTTP_AUTH_ENABLED=false
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: paloalto-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ../dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana-datasource.yaml:/etc/grafana/provisioning/datasources/influxdb.yaml:ro
+      - ./grafana-dashboard-config.yaml:/etc/grafana/provisioning/dashboards/config.yaml:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=changeme
+      - GF_INSTALL_PLUGINS=
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    networks:
+      - monitoring
+
+  collector:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    container_name: paloalto-collector
+    restart: unless-stopped
+    volumes:
+      - ../config:/app/config:ro
+      - ../logs:/app/logs
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    networks:
+      - monitoring
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: sh -c "sleep 10 && python src/collector.py"
+
+  grafana-init:
+    image: curlimages/curl:latest
+    container_name: paloalto-grafana-init
+    volumes:
+      - ./grafana-init.sh:/grafana-init.sh:ro
+    depends_on:
+      - grafana
+    networks:
+      - monitoring
+    command: sh /grafana-init.sh
+    restart: "no"
+
+networks:
+  monitoring:
+    driver: bridge
+
+volumes:
+  influxdb-data:
+  grafana-data:
