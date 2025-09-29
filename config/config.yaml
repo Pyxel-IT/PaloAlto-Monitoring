@@ -1,0 +1,40 @@
+# Configuration exemple pour le monitoring Palo Alto
+# Copier ce fichier vers config.yaml et ajuster les valeurs
+
+paloalto:
+  # Liste des équipements à monitorer
+  devices:
+    - name: "GeTeWe"
+      host: "192.168.100.98"
+      port: 443
+      api_key: "LUFRPT10bWFjdnpTMGtSc1NkVFZvM2tZbFc0eEdqTTg9dnVWNEx6VjdqL3RDRFBCS0ZtSTk4OWdEWjRUbVVUZUppRFpKY2tDNGloTGZZd2xZUk8ydEJlY0xTUUJBdjIvdA=="
+      verify_ssl: false
+    - name: "Perso"
+      host: "192.168.100.252"
+      port: 443
+      api_key: "LUFRPT1tdlJJRDFLSTVTUGoyOWVPU3VnaWt1eXRNWUk9MFNNYTI2OWVNaGpKblB0R1JLUjYxSWZudTlDbWp5RTliTGsrUlFKdVB5UFVkeGVBc096ejQvdzFGK3RzOUh4dQ=="
+      verify_ssl: false
+
+# Configuration InfluxDB
+influxdb:
+  host: "influxdb"
+  port: 8086
+  database: "paloalto_monitoring"
+  username: "admin"
+  password: "changeme"
+  retention_policy: "30d"
+
+# Configuration de la collecte
+collector:
+  interval_seconds: 60
+  timeout_seconds: 30
+  retry_count: 3
+  retry_delay_seconds: 5
+
+# Configuration des logs
+logging:
+  level: "INFO"
+  file: "logs/collector.log"
+  max_size_mb: 100
+  backup_count: 10
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

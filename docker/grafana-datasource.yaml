@@ -1,0 +1,13 @@
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    database: paloalto_monitoring
+    user: collector
+    secureJsonData:
+      password: changeme
+    isDefault: true
+    editable: true
