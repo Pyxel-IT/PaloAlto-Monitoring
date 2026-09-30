@@ -1,20 +1,17 @@
-version: '3.8'
-
 services:
   influxdb:
     image: influxdb:1.8
-    container_name: paloalto-influxdb
     restart: unless-stopped
     ports:
-      - "8086:8086"
+      - "${INFLUXDB_PORT:-8086}:8086"
     volumes:
       - influxdb-data:/var/lib/influxdb
     environment:
-      - INFLUXDB_DB=paloalto_monitoring
-      - INFLUXDB_ADMIN_USER=admin
-      - INFLUXDB_ADMIN_PASSWORD=changeme
-      - INFLUXDB_USER=collector
-      - INFLUXDB_USER_PASSWORD=changeme
+      - INFLUXDB_DB=${INFLUXDB_DB:-paloalto_monitoring}
+      - INFLUXDB_ADMIN_USER=${INFLUXDB_ADMIN_USER:-admin}
+      - INFLUXDB_ADMIN_PASSWORD=${INFLUXDB_ADMIN_PASSWORD:-yqdfnkLLSbtQFt6j}
+      - INFLUXDB_USER=${INFLUXDB_USER:-collector}
+      - INFLUXDB_USER_PASSWORD=${INFLUXDB_USER_PASSWORD:-eSJmY4mNBhtQb8hA}
       - INFLUXDB_HTTP_AUTH_ENABLED=false
     networks:
       - monitoring
@@ -26,18 +23,17 @@ services:
 
   grafana:
     image: grafana/grafana:latest
-    container_name: paloalto-grafana
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "${GRAFANA_PORT:-3000}:3000"
     volumes:
       - grafana-data:/var/lib/grafana
-      - ../dashboards:/etc/grafana/provisioning/dashboards
+      - ${DASHBOARDS_PATH:-../dashboards}:/etc/grafana/provisioning/dashboards
       - ./grafana-datasource.yaml:/etc/grafana/provisioning/datasources/influxdb.yaml:ro
       - ./grafana-dashboard-config.yaml:/etc/grafana/provisioning/dashboards/config.yaml:ro
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=changeme
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-G3TQYaRgPsdTRQx6}
       - GF_INSTALL_PLUGINS=
     depends_on:
       influxdb:
@@ -49,11 +45,10 @@ services:
     build:
       context: ../
       dockerfile: docker/Dockerfile
-    container_name: paloalto-collector
     restart: unless-stopped
     volumes:
-      - ../config:/app/config:ro
-      - ../logs:/app/logs
+      - ${CONFIG_PATH:-../config}:/app/config:ro
+      - ${LOGS_PATH:-../logs}:/app/logs
     depends_on:
       influxdb:
         condition: service_healthy
@@ -65,7 +60,6 @@ services:
 
   grafana-init:
     image: curlimages/curl:latest
-    container_name: paloalto-grafana-init
     volumes:
       - ./grafana-init.sh:/grafana-init.sh:ro
     depends_on:

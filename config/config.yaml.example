@@ -32,6 +32,10 @@ collector:
   retry_count: 3
   retry_delay_seconds: 5
 
+# Configuration de la sortie JSON (pour le mode découplé)
+output:
+  json_file: "data/metrics.jsonl"
+
 # Configuration des logs
 logging:
   level: "INFO"

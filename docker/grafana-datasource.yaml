@@ -8,6 +8,6 @@ datasources:
     database: paloalto_monitoring
     user: collector
     secureJsonData:
-      password: changeme
+      password: eSJmY4mNBhtQb8hA
     isDefault: true
     editable: true
