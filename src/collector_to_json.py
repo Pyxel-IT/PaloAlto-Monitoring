@@ -50,6 +50,8 @@ class PaloAltoJsonCollector:
             'cmd': '<show><running><resource-monitor><second><last>60</last></second></resource-monitor></running></show>',
             'key': device['api_key']
         }
+        if device.get('target'):
+            params['target'] = device['target']
 
         try:
             response = requests.get(
@@ -133,6 +135,8 @@ class PaloAltoJsonCollector:
             'cmd': '<show><counter><global></global></counter></show>',
             'key': device['api_key']
         }
+        if device.get('target'):
+            params['target'] = device['target']
 
         try:
             response = requests.get(
