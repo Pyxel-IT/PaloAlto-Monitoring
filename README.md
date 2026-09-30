@@ -6,22 +6,25 @@ Complete monitoring solution for Palo Alto devices via API with multi-metrics co
 
 ```
 paloalto-monitoring/
-├── src/                    # Python source code
-│   └── collector.py        # Main collection script
-├── config/                 # Configuration
-│   └── config.yaml.example # Configuration example
-├── docker/                 # Docker configuration
-│   └── docker-compose.yml  # Monitoring stack
-├── dashboards/             # Grafana dashboards
-│   ├── cpu-monitoring.json # Basic CPU dashboard
+├── src/                         # Python source code
+│   ├── collector.py             # Integrated collector (API → InfluxDB)
+│   ├── collector_to_json.py     # Decoupled collector (API → JSON Lines)
+│   └── json_to_influxdb.py      # Decoupled ingester (JSON Lines → InfluxDB)
+├── config/                      # Configuration
+│   └── config.yaml.example      # Configuration example
+├── config-client/               # Client-specific configuration (generated)
+├── docker/                      # Docker configuration
+│   ├── docker-compose.yml       # Monitoring stack (parameterized)
+│   ├── .env                     # Default instance variables
+│   └── .env.client              # Client instance variables
+├── dashboards/                  # Grafana dashboards
+│   ├── cpu-monitoring.json      # Basic CPU dashboard
 │   └── paloalto-complete-monitoring.json # Complete dashboard
-├── tests/                  # Unit tests
-├── docs/                   # Documentation
-├── scripts/                # Utility scripts
-├── logs/                   # Logs (generated)
-└── data/                   # Persistent data (generated)
-    ├── influxdb/
-    └── grafana/
+├── scripts/                     # Utility scripts
+│   └── generate_api_key.py      # API key generation
+├── data/                        # JSON Lines data (generated)
+├── logs/                        # Logs (generated)
+└── logs-client/                 # Client logs (generated)
 ```
 
 ## Features
@@ -35,9 +38,16 @@ paloalto-monitoring/
 - Automatic multi-dataplane support
 - Collection every minute with 60-second history per metric
 
+### Decoupled mode
+- **Collector → JSON**: Standalone script that fetches data and stores it in a JSON Lines file
+- **JSON → InfluxDB**: Standalone script that reads the JSON Lines file and ingests into InfluxDB
+- Intermediate JSON Lines format (`.jsonl`) for easy integration with external systems
+- File locking for safe concurrent read/write
+
 ### Infrastructure
 - InfluxDB storage with configurable retention policy (30d default)
 - Complete Docker stack with healthchecks
+- **Multi-instance support**: Run multiple isolated stacks in parallel (e.g. per-client)
 - Multi-device support
 - Auto-provisioned Grafana dashboards
 - Error handling and automatic retry
@@ -63,7 +73,7 @@ cp config/config.yaml.example config/config.yaml
    - InfluxDB credentials
    - Collection parameters
 
-### Starting with Docker
+### Starting with Docker (integrated mode)
 
 ```bash
 cd docker
@@ -71,10 +81,82 @@ docker compose up -d
 ```
 
 Accessible services:
-- **Grafana**: http://localhost:3000 (admin/changeme)
+- **Grafana**: http://localhost:3000
 - **InfluxDB**: http://localhost:8086
 
 Dashboards are automatically provisioned in the "Palo Alto Monitoring" folder.
+
+### Decoupled mode (JSON Lines)
+
+Use this mode when you need to separate data collection from InfluxDB ingestion (e.g. collecting on one machine, ingesting on another).
+
+**1. Start the collector** (writes to `data/metrics.jsonl`):
+```bash
+pip install -r requirements.txt
+python src/collector_to_json.py
+```
+
+**2. Start the ingester** (reads from `data/metrics.jsonl`, writes to InfluxDB):
+```bash
+# One-shot: ingest pending data and exit
+python src/json_to_influxdb.py --once
+
+# Continuous: check for new data every 10 seconds
+python src/json_to_influxdb.py
+
+# Custom interval
+python src/json_to_influxdb.py --interval 30
+```
+
+Both scripts can run simultaneously. The ingester locks the file during read+truncate to prevent data corruption.
+
+The JSON Lines file path is configurable in `config.yaml`:
+```yaml
+output:
+  json_file: "data/metrics.jsonl"
+```
+
+### Multi-instance deployment
+
+Run multiple isolated stacks in parallel (e.g. one per client) using environment files.
+
+**Default instance** (uses `docker/.env`):
+```bash
+cd docker
+docker compose up -d
+```
+
+**Client instance** (uses `docker/.env.client`):
+```bash
+cd docker
+docker compose --env-file .env.client up -d
+```
+
+Each instance has its own:
+- Ports (default: 8086/3000, client: 8087/3001)
+- Docker volumes (isolated by `COMPOSE_PROJECT_NAME`)
+- Configuration directory (`config/` vs `config-client/`)
+- Log directory (`logs/` vs `logs-client/`)
+
+**Manage instances independently:**
+```bash
+# Status
+docker compose --env-file .env ps              # default
+docker compose --env-file .env.client ps        # client
+
+# Logs
+docker compose --env-file .env.client logs -f
+
+# Stop
+docker compose --env-file .env.client down
+```
+
+**Create a new instance:**
+1. Copy `docker/.env.client` to `docker/.env.newclient`
+2. Adjust `COMPOSE_PROJECT_NAME`, ports, and passwords
+3. Create a `config-newclient/config.yaml` with the target device(s)
+4. Set `CONFIG_PATH=../config-newclient` and `LOGS_PATH=../logs-newclient` in the `.env` file
+5. Launch: `docker compose --env-file .env.newclient up -d`
 
 ### Local execution (development)
 
@@ -169,10 +251,10 @@ python scripts/generate_api_key.py <FIREWALL_IP> <USERNAME>
 
 ## Security
 
-- API keys should not be committed (see .gitignore)
-- Use environment variables in production
+- API keys and credentials should not be committed (see `.gitignore`)
+- Per-instance secrets are stored in `.env` files (gitignored) and `config-*/` directories (gitignored)
+- Change all `CHANGE_ME_*` placeholders before deploying client instances
 - Configure SSL/TLS for external connections
-- Change default passwords
 
 ## Maintenance
 
@@ -181,7 +263,11 @@ Logs are stored in `logs/collector.log` with automatic rotation.
 
 ### InfluxDB Backup
 ```bash
-docker exec paloalto-influxdb influxd backup /backup
+# Default instance
+docker compose --env-file .env exec influxdb influxd backup /backup
+
+# Client instance
+docker compose --env-file .env.client exec influxdb influxd backup /backup
 ```
 
 ### Dashboard updates
@@ -191,9 +277,10 @@ Dashboards are automatically provisioned. To modify them:
 
 ### Complete rebuild
 ```bash
-docker compose down -v
-docker compose build --no-cache
-docker compose up -d
+# Specify the env file for the target instance
+docker compose --env-file .env down -v
+docker compose --env-file .env build --no-cache
+docker compose --env-file .env up -d
 ```
 
 ## Troubleshooting
@@ -208,19 +295,21 @@ docker compose up -d
 ### Service monitoring
 
 ```bash
-# Container status
-docker compose ps
+# Container status (specify instance)
+docker compose --env-file .env ps
+docker compose --env-file .env.client ps
 
 # Real-time logs
-docker compose logs -f
+docker compose --env-file .env logs -f
 
 # Specific service logs
-docker compose logs collector
-docker compose logs grafana
-docker compose logs influxdb
+docker compose --env-file .env logs collector
+docker compose --env-file .env logs grafana
+docker compose --env-file .env logs influxdb
 
 # InfluxDB healthcheck
-curl http://localhost:8086/ping
+curl http://localhost:8086/ping   # default instance
+curl http://localhost:8087/ping   # client instance
 ```
 
 ### Advanced configuration

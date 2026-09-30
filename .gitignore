@@ -16,11 +16,14 @@ build/
 config/secrets.yaml
 config/*.key
 config/*.pem
+config-*/
 .env
-.env.local
+.env.*
+!.env.example
 
 # Logs
 logs/
+logs-client/
 *.log
 
 # IDE
@@ -37,6 +40,9 @@ Thumbs.db
 # Docker volumes
 data/influxdb/
 data/grafana/
+
+# JSON Lines data files
+data/*.jsonl
 
 # Tests
 .coverage

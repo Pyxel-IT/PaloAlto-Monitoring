@@ -4,7 +4,7 @@
 echo "Initialisation des dashboards Palo Alto..."
 
 # Attendre que Grafana soit prêt
-until curl -s http://localhost:3000/api/health > /dev/null; do
+until curl -s http://grafana:3000/api/health > /dev/null; do
     echo "En attente de Grafana..."
     sleep 2
 done
@@ -17,7 +17,7 @@ curl -X POST \
   -d '{
     "title": "Palo Alto Monitoring"
   }' \
-  http://admin:changeme@localhost:3000/api/folders
+  http://admin:G3TQYaRgPsdTRQx6@grafana:3000/api/folders
 
 echo "Dossier Palo Alto Monitoring créé ou existe déjà."
 echo "Les dashboards seront automatiquement chargés depuis /etc/grafana/provisioning/dashboards/"
