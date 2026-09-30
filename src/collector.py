@@ -77,13 +77,15 @@ class PaloAltoCollector:
         return client
 
     def _get_metrics(self, device: Dict) -> Dict[str, Dict]:
-        url = f"https://{device['host']}:{device['port']}/api/"
+        url = f"https://{device['host']}:{device.get('port', 443)}/api/"
 
         params = {
             'type': 'op',
             'cmd': '<show><running><resource-monitor><second><last>60</last></second></resource-monitor></running></show>',
             'key': device['api_key']
         }
+        if device.get('target'):
+            params['target'] = device['target']
 
         try:
             response = requests.get(
@@ -164,13 +166,15 @@ class PaloAltoCollector:
 
     def _get_global_counters(self, device: Dict) -> Dict[str, Any]:
         """Récupère les compteurs globaux des dataplanes"""
-        url = f"https://{device['host']}:{device['port']}/api/"
+        url = f"https://{device['host']}:{device.get('port', 443)}/api/"
 
         params = {
             'type': 'op',
             'cmd': '<show><counter><global></global></counter></show>',
             'key': device['api_key']
         }
+        if device.get('target'):
+            params['target'] = device['target']
 
         try:
             response = requests.get(

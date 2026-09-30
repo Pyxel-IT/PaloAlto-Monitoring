@@ -4,16 +4,26 @@
 paloalto:
   # Liste des équipements à monitorer
   devices:
+    # Accès direct au firewall
     - name: "fw-paris-01"
       host: "10.0.1.10"
       port: 443
       api_key: "YOUR_API_KEY_HERE"
       verify_ssl: false
 
-    - name: "fw-paris-02"
-      host: "10.0.1.11"
+    # Accès via Panorama (proxy) : host/api_key = Panorama, target = SN du firewall
+    - name: "fw-client-01"
+      host: "panorama.example.com"
       port: 443
-      api_key: "YOUR_API_KEY_HERE"
+      api_key: "YOUR_PANORAMA_API_KEY_HERE"
+      target: "0123456789"
+      verify_ssl: false
+
+    - name: "fw-client-02"
+      host: "panorama.example.com"
+      port: 443
+      api_key: "YOUR_PANORAMA_API_KEY_HERE"
+      target: "9876543210"
       verify_ssl: false
 
 # Configuration InfluxDB
