@@ -23,8 +23,11 @@ class PaloAltoJsonCollector:
         Path(self.json_file).parent.mkdir(parents=True, exist_ok=True)
 
     def _load_config(self, config_path: str) -> Dict:
-        with open(config_path, 'r') as f:
-            return yaml.safe_load(f)
+        with open(config_path, 'r', encoding='utf-8-sig') as f:
+            config = yaml.safe_load(f)
+        if 'paloalto' not in config:
+            raise KeyError(f"Missing 'paloalto' section in {config_path}. Found keys: {list(config.keys())}")
+        return config
 
     def _setup_logging(self):
         log_config = self.config.get('logging', {})
