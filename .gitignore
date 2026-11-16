@@ -20,6 +20,7 @@ config-*/
 .env
 .env.*
 !.env.example
+config.yaml
 
 # Logs
 logs/
@@ -52,3 +53,4 @@ htmlcov/
 
 # Documentation
 docs/_build/
+

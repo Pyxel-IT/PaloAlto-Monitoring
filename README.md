@@ -21,7 +21,8 @@ paloalto-monitoring/
 │   ├── cpu-monitoring.json      # Basic CPU dashboard
 │   └── paloalto-complete-monitoring.json # Complete dashboard
 ├── scripts/                     # Utility scripts
-│   └── generate_api_key.py      # API key generation
+│   ├── generate_api_key.py      # API key generation
+│   └── trim_jsonl.py            # Trim JSONL data by date
 ├── data/                        # JSON Lines data (generated)
 ├── logs/                        # Logs (generated)
 └── logs-client/                 # Client logs (generated)
@@ -70,6 +71,7 @@ cp config/config.yaml.example config/config.yaml
 
 2. Edit `config/config.yaml` with your parameters:
    - IP addresses and API keys of Palo Alto devices
+   - For Panorama proxy mode: use the Panorama host/api_key and add `target` with the firewall serial number
    - InfluxDB credentials
    - Collection parameters
 
@@ -115,6 +117,34 @@ The JSON Lines file path is configurable in `config.yaml`:
 output:
   json_file: "data/metrics.jsonl"
 ```
+
+**3. Trim old data** (optional, before ingestion):
+```bash
+# Preview what will be removed
+python scripts/trim_jsonl.py "15/10/2025 10:42" --dry-run
+
+# Apply: keep only records after the given date
+python scripts/trim_jsonl.py "15/10/2025 10:42"
+
+# Target a specific file
+python scripts/trim_jsonl.py "2025-10-15 10:42" --file data/other.jsonl
+```
+
+Accepted date formats: `15/10/2025 10:42`, `2025-10-15 10:42`, `2025-10-15T10:42`.
+
+### Panorama proxy mode
+
+When direct access to a firewall is not available, API calls can be proxied through Panorama by adding the `target` field (firewall serial number) to the device configuration:
+
+```yaml
+- name: "fw-client-01"
+  host: "panorama.example.com"
+  api_key: "PANORAMA_API_KEY"
+  target: "0123456789"
+  verify_ssl: false
+```
+
+The same API endpoints are used; Panorama forwards the request to the target firewall. Supported in both `collector.py` and `collector_to_json.py`.
 
 ### Multi-instance deployment
 
