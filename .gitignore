@@ -22,9 +22,12 @@ config-*/
 !.env.example
 config.yaml
 
+# Generated instance files (contain passwords)
+docker/grafana-datasource-*.yaml
+
 # Logs
 logs/
-logs-client/
+logs-*/
 *.log
 
 # IDE
