@@ -3,6 +3,9 @@
 # Script d'initialisation Grafana
 echo "Initialisation des dashboards Palo Alto..."
 
+GRAFANA_USER="${GRAFANA_ADMIN_USER:-admin}"
+GRAFANA_PASS="${GRAFANA_ADMIN_PASSWORD:-changeme}"
+
 # Attendre que Grafana soit prêt
 until curl -s http://grafana:3000/api/health > /dev/null; do
     echo "En attente de Grafana..."
@@ -17,7 +20,7 @@ curl -X POST \
   -d '{
     "title": "Palo Alto Monitoring"
   }' \
-  http://admin:G3TQYaRgPsdTRQx6@grafana:3000/api/folders
+  "http://${GRAFANA_USER}:${GRAFANA_PASS}@grafana:3000/api/folders"
 
 echo "Dossier Palo Alto Monitoring créé ou existe déjà."
 echo "Les dashboards seront automatiquement chargés depuis /etc/grafana/provisioning/dashboards/"
