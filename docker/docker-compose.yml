@@ -29,7 +29,7 @@ services:
     volumes:
       - grafana-data:/var/lib/grafana
       - ${DASHBOARDS_PATH:-../dashboards}:/etc/grafana/provisioning/dashboards
-      - ./grafana-datasource.yaml:/etc/grafana/provisioning/datasources/influxdb.yaml:ro
+      - ${GRAFANA_DATASOURCE:-./grafana-datasource.yaml}:/etc/grafana/provisioning/datasources/influxdb.yaml:ro
       - ./grafana-dashboard-config.yaml:/etc/grafana/provisioning/dashboards/config.yaml:ro
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
@@ -62,6 +62,9 @@ services:
     image: curlimages/curl:latest
     volumes:
       - ./grafana-init.sh:/grafana-init.sh:ro
+    environment:
+      - GRAFANA_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GRAFANA_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-changeme}
     depends_on:
       - grafana
     networks:
