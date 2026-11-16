@@ -4,15 +4,15 @@
 paloalto:
   # Liste des équipements à monitorer
   devices:
-    - name: "GeTeWe"
-      host: "192.168.100.98"
-      port: 443
-      api_key: "LUFRPT10bWFjdnpTMGtSc1NkVFZvM2tZbFc0eEdqTTg9dnVWNEx6VjdqL3RDRFBCS0ZtSTk4OWdEWjRUbVVUZUppRFpKY2tDNGloTGZZd2xZUk8ydEJlY0xTUUJBdjIvdA=="
-      verify_ssl: false
-    - name: "Perso"
+    - name: "PA-Perso"
       host: "192.168.100.252"
       port: 443
-      api_key: "LUFRPT1tdlJJRDFLSTVTUGoyOWVPU3VnaWt1eXRNWUk9MFNNYTI2OWVNaGpKblB0R1JLUjYxSWZudTlDbWp5RTliTGsrUlFKdVB5UFVkeGVBc096ejQvdzFGK3RzOUh4dQ=="
+      api_key: "e6bc89fb5328bd40d3d62c13c5b7369c:jDvhij8-_S_77jcFDoiQJXy2ykhZ-br1Pm7TObskFSnzcbPoBs6D4iQHW1BwBe1dCaIeXlrxcW0YtrXMbiQ_q2PU84wv1McXL1b1BoAj7JctRj40Ih7twY_zFXKspJ7RgoNyJ8nkH0oVaBF5Aa1vMVMeBzRUAyCmVaO28NlyBup2iRfHlDl-TOsBZPV6OZe4pCTIotO04Dwx1NVgZgh4xYxVU7zJJl5gu0uqOaRzXyR2cIeuA8qJmMX_35bg-CXzcOQBSo_FEMCP4vbNNKrfdejKk340NgIl6vqYW0dSTmyV-wCW24daL9CjQnYRK-J4HfZTh4nEhk5F7LVjyG40zuo5plfI3mq2DfOSVaQMoh-el0c6GsRbj4cnNySwkkkCdZyZ2vh92F8MKLREOt-FQYHfNfQolk2MdV1dzDCX0qiazRNmuMLw7NQOw9JTVYEPBQtjk68iJChs6U7hAk9yzBoznRN1Tp-did9RQ8nCMFBz2Ztre28sjuIRFZUi9CfWQBP5EQifWwJWot69FnQnew4oL86qckNsPtDXa-bppvZiTk8ObCXMPz29U64gcr6VUVVWq2xQQvnH5ztmzy-xOqLJZRcpMDM7wbK6E6EiGAOknHTKkO0WrbAm3386x0x0YAAlWfuDH22RxUKQgs2BVoe1ejkVwcBEhNc9X59awDlgpnSC6zTvw5UvzzomwbvT"
+      verify_ssl: false
+    - name: "PA-440"
+      host: "192.168.100.251"
+      port: 443
+      api_key: "LUFRPT1ZYVFjbEo5ZXhhTktNYVBrRUlmbmVDaUdwRDQ9MFNNYTI2OWVNaGpKblB0R1JLUjYxRGZaKyt2THBqTC9zYmZrcGJRS2F0Y20rb2Q4MUplNk94NCs0Z3VkeXR5Mw=="
       verify_ssl: false
 
 # Configuration InfluxDB
@@ -21,7 +21,7 @@ influxdb:
   port: 8086
   database: "paloalto_monitoring"
   username: "admin"
-  password: "changeme"
+  password: "yqdfnkLLSbtQFt6j"
   retention_policy: "30d"
 
 # Configuration de la collecte
@@ -30,6 +30,10 @@ collector:
   timeout_seconds: 30
   retry_count: 3
   retry_delay_seconds: 5
+
+# Configuration de la sortie JSON (pour le mode découplé)
+output:
+  json_file: "data/metrics.jsonl"
 
 # Configuration des logs
 logging:
